@@ -376,6 +376,207 @@
     try { localStorage.setItem('pf-theme', t); } catch (e) {}
   }
 
+  /* ============================================================
+     preferences (persisted in localStorage)
+     ============================================================ */
+
+  var prefs = { crt: 'on', font: 'normal' };
+  var soundOn = false;
+
+  function loadPrefs() {
+    try {
+      prefs.crt  = localStorage.getItem('pf-crt')  || 'on';
+      prefs.font = localStorage.getItem('pf-font') || 'normal';
+      soundOn    = localStorage.getItem('pf-sound') === '1';
+    } catch (e) {}
+  }
+
+  function savePrefs() {
+    try {
+      localStorage.setItem('pf-crt', prefs.crt);
+      localStorage.setItem('pf-font', prefs.font);
+      localStorage.setItem('pf-sound', soundOn ? '1' : '0');
+    } catch (e) {}
+  }
+
+  function applyPrefs() {
+    document.documentElement.dataset.crt = prefs.crt;
+    document.documentElement.dataset.font = prefs.font;
+  }
+
+  /* ============================================================
+     PC speaker (square wave, like the real thing)
+     ============================================================ */
+
+  var actx = null;
+
+  function audioCtx() {
+    if (actx) {
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { actx = new AC(); } catch (e) { return null; }
+    return actx;
+  }
+
+  function tone(freq, dur, force) {
+    if (!force && !soundOn) return;
+    var ac = audioCtx();
+    if (!ac) return;
+
+    var t0 = ac.currentTime;
+    var osc = ac.createOscillator();
+    var gain = ac.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t0);
+
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.05, t0 + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+
+  def('beep', 'PC speaker beep  (beep 3)', function (args) {
+    var n = parseInt(args[0], 10);
+    if (!n || n < 1) n = 1;
+    if (n > 5) n = 5;
+    for (var i = 0; i < n; i++) {
+      (function (k) {
+        setTimeout(function () { tone(880, 0.1, true); }, k * 200);
+      })(i);
+    }
+    print('beep' + (n > 1 ? ' x' + n : ''), 'dim');
+  });
+
+  def('sound', 'PC speaker: sound on | sound off', function (args) {
+    var a = (args[0] || '').toLowerCase();
+    if (a !== 'on' && a !== 'off') {
+      print('pc speaker: ' + (soundOn ? 'on' : 'off'), 'bright');
+      print('usage: sound on | sound off', 'dim');
+      return;
+    }
+    soundOn = (a === 'on');
+    savePrefs();
+    if (soundOn) tone(880, 0.12, true);
+    print('pc speaker ' + a, 'ok');
+  });
+
+  /* ============================================================
+     BIOS setup screen
+     ============================================================ */
+
+  var setupEl   = document.getElementById('setup');
+  var setupBody = document.getElementById('setup-body');
+  var setupSub  = document.getElementById('setup-sub');
+  var setupActive = false;
+  var setupRow = 0;
+
+  var SETUP_ITEMS = [
+    {
+      label: 'Phosphor Colour',
+      values: THEMES,
+      get: function () { return theme; },
+      set: function (v) { applyTheme(v); }
+    },
+    {
+      label: 'CRT Scanlines',
+      values: ['on', 'off'],
+      get: function () { return prefs.crt; },
+      set: function (v) { prefs.crt = v; savePrefs(); applyPrefs(); }
+    },
+    {
+      label: 'Font Size',
+      values: ['small', 'normal', 'large', 'huge'],
+      get: function () { return prefs.font; },
+      set: function (v) { prefs.font = v; savePrefs(); applyPrefs(); }
+    },
+    {
+      label: 'PC Speaker',
+      values: ['off', 'on'],
+      get: function () { return soundOn ? 'on' : 'off'; },
+      set: function (v) { soundOn = (v === 'on'); savePrefs(); tone(880, 0.08, true); }
+    }
+  ];
+
+  function renderSetup() {
+    setupBody.textContent = '';
+    SETUP_ITEMS.forEach(function (item, i) {
+      var row = document.createElement('div');
+      row.className = 'setup-row' + (i === setupRow ? ' sel' : '');
+
+      var k = document.createElement('span');
+      k.className = 'setup-key';
+      k.textContent = item.label;
+
+      var v = document.createElement('span');
+      v.className = 'setup-val';
+      v.textContent = '< ' + String(item.get()).toUpperCase() + ' >';
+
+      row.appendChild(k);
+      row.appendChild(v);
+      setupBody.appendChild(row);
+    });
+  }
+
+  function openSetup() {
+    setupActive = true;
+    setupRow = 0;
+    setupSub.textContent = (CFG.handle || 'guest') + '@' + (CFG.host || 'portfolio') +
+                           ' - display & audio configuration';
+    renderSetup();
+    setupEl.hidden = false;
+    if (kbd.blur) kbd.blur();
+  }
+
+  function closeSetup() {
+    setupActive = false;
+    setupEl.hidden = true;
+    if (kbd.focus) kbd.focus({ preventScroll: true });
+    bootLine('[ OK ] settings saved');
+  }
+
+  function handleSetupKey(e) {
+    var item = SETUP_ITEMS[setupRow];
+
+    if (e.key === 'ArrowUp') {
+      setupRow = (setupRow + SETUP_ITEMS.length - 1) % SETUP_ITEMS.length;
+      renderSetup();
+      tone(600, 0.03);
+    } else if (e.key === 'ArrowDown') {
+      setupRow = (setupRow + 1) % SETUP_ITEMS.length;
+      renderSetup();
+      tone(600, 0.03);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
+      var vals = item.values;
+      var cur = vals.indexOf(String(item.get()));
+      var step = (e.key === 'ArrowLeft') ? -1 : 1;
+      var next = (cur + step + vals.length) % vals.length;
+      item.set(vals[next]);
+      renderSetup();
+      tone(1000, 0.04);
+    } else if (e.key === 'Escape' || e.key === 'F10') {
+      closeSetup();
+    }
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (!setupActive) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleSetupKey(e);
+  }, true);
+
+  def('setup', 'BIOS-style settings screen', function () {
+    openSetup();
+  });
+
   def('history', 'command history', function () {
     history.forEach(function (h, i) {
       print(String(i + 1).padStart(3) + '  ' + h);
@@ -524,6 +725,10 @@
   kbd.addEventListener('input', renderInput);
 
   kbd.addEventListener('keydown', function (e) {
+    if (setupActive) return;
+
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) tone(1400, 0.012);
+
     if (busy) {
       if (!e.metaKey && !e.ctrlKey) {
         e.preventDefault();
@@ -563,6 +768,7 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    if (setupActive) return;
     if (document.activeElement !== kbd && !busy) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       kbd.focus({ preventScroll: true });
@@ -638,6 +844,8 @@
      ============================================================ */
 
   document.title = (CFG.name && CFG.name.charAt(0) !== '[' ? CFG.name : 'portfolio') + ' - console';
+  loadPrefs();
+  applyPrefs();
   applyTheme(theme);
   renderPrompt();
   renderInput();

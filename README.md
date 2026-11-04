@@ -31,6 +31,9 @@ There is no bundler, no npm, no dependencies. Open `index.html` and it runs.
 | `tree` | whole file tree |
 | `neofetch` | system info card |
 | `theme dos\|green\|amber\|white` | switch phosphor colour (remembered) |
+| `setup` | BIOS-style setup screen: phosphor, scanlines, font size, PC speaker |
+| `beep` / `beep 3` | PC speaker beep (real square wave via WebAudio) |
+| `sound on\|off` | keyboard clicks + setup feedback |
 | `help` | the list above |
 | `history` | commands you typed |
 | `clear` | wipe the screen |
