@@ -64,18 +64,6 @@
     return s;
   }
 
-  function link(parent, text, href) {
-    var a = document.createElement('a');
-    a.textContent = text;
-    a.href = href;
-    if (href.indexOf('mailto:') !== 0) {
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-    }
-    parent.appendChild(a);
-    return a;
-  }
-
   /* ============================================================
      path handling
      ============================================================ */
@@ -387,31 +375,6 @@
     document.documentElement.dataset.theme = t;
     try { localStorage.setItem('pf-theme', t); } catch (e) {}
   }
-
-  def('links', 'how to reach me', function () {
-    var d0 = makeLine();
-    span(d0, 'email'.padEnd(10), 'accent');
-    link(d0, CFG.email || 'you@example.com', 'mailto:' + (CFG.email || 'you@example.com'));
-    append(d0);
-
-    if (CFG.location) {
-      var d1 = makeLine();
-      span(d1, 'base'.padEnd(10), 'accent');
-      span(d1, CFG.location);
-      append(d1);
-    }
-
-    Object.keys(CFG.links || {}).forEach(function (k) {
-      var d = makeLine();
-      span(d, k.padEnd(10), 'accent');
-      link(d, CFG.links[k], CFG.links[k]);
-      append(d);
-    });
-  });
-
-  def('skills', 'list skills', function () {
-    (CFG.skills || []).forEach(function (s) { print('  ' + s); });
-  });
 
   def('history', 'command history', function () {
     history.forEach(function (h, i) {

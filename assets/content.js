@@ -1,37 +1,28 @@
 /* ===============================================================
    content.js  —  EDIT THIS FILE ONLY.
-   Everything the terminal shows (name, links, files, projects)
-   lives here. Placeholders are marked with [SQUARE BRACKETS].
+   Everything the terminal shows (name, files, projects) lives here.
+   Placeholders are marked with [SQUARE BRACKETS].
    =============================================================== */
 
 window.PORTFOLIO = {
 
-  /* ---------- who you are ---------- */
+  /* ---------- prompt identity ---------- */
 
   handle: 'guest',              // prompt name:  guest@portfolio
   host:   'portfolio',          // prompt host
 
-  name:     '[YOUR NAME]',
-  role:     '[YOUR ROLE]',
-  tagline:  '[ONE LINE ABOUT YOU]',
-  location: '[CITY, COUNTRY]',
+  /* ---------- who you are ---------- */
 
-  email: 'you@example.com',
-
-  links: {
-    github:   'https://github.com/conedone-sys',
-    telegram: 'https://t.me/[YOUR_HANDLE]',
-    linkedin: 'https://www.linkedin.com/in/[YOUR_HANDLE]'
-  },
-
-  skills: [
-    '[SKILL 1]', '[SKILL 2]', '[SKILL 3]',
-    '[SKILL 4]', '[SKILL 5]', '[SKILL 6]'
-  ],
+  name:    '[YOUR NAME]',
+  role:    '[YOUR ROLE]',
+  tagline: '[ONE LINE ABOUT YOU]',
 
   /* ---------- the virtual file system ----------
      dirs  : { name: { dirs:{}, files:{} } }
      files : { name: { content: `text` } }
+
+     A file is one backtick template literal. Indentation and line
+     breaks inside it are printed exactly as written.
      -------------------------------------------------- */
 
   fs: {
@@ -44,7 +35,6 @@ window.PORTFOLIO = {
           'about.txt': {
             content: `NAME    : [YOUR NAME]
 ROLE    : [YOUR ROLE]
-BASE    : [CITY, COUNTRY]
 STATUS  : [open to work / employed / studying]
 
 ABOUT
@@ -57,8 +47,7 @@ console.]
 
 CONTACT
 -------
-email    : you@example.com
-telegram : @[YOUR_HANDLE]
+email : you@example.com
 `
           },
 
@@ -89,26 +78,6 @@ year  : [2026]
 repo  : [https://github.com/conedone-sys/...]
 live  : [https://example.com]
 `
-          },
-          'project-2.md': {
-            content: `# [PROJECT 2]
-
-[One or two lines about what this project does and why it exists.]
-
-stack : [tech, tech, tech]
-year  : [2025]
-repo  : [https://github.com/conedone-sys/...]
-`
-          },
-          'project-3.md': {
-            content: `# [PROJECT 3]
-
-[One or two lines about what this project does and why it exists.]
-
-stack : [tech, tech, tech]
-year  : [2024]
-repo  : [https://github.com/conedone-sys/...]
-`
           }
         }
       },
@@ -122,8 +91,6 @@ repo  : [https://github.com/conedone-sys/...]
           },
           'links.txt': {
             content: `github    https://github.com/conedone-sys
-telegram  https://t.me/[YOUR_HANDLE]
-linkedin  https://www.linkedin.com/in/[YOUR_HANDLE]
 `
           }
         }
@@ -153,7 +120,7 @@ it changes here.
 
       'resume.txt': {
         content: `[YOUR NAME] - [YOUR ROLE]
-[email] | [telegram] | [github]
+[email] | [github]
 
 EXPERIENCE
   [2024 - now]  [Company] - [Position]

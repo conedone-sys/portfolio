@@ -31,7 +31,6 @@ There is no bundler, no npm, no dependencies. Open `index.html` and it runs.
 | `tree` | whole file tree |
 | `neofetch` | system info card |
 | `theme dos\|green\|amber\|white` | switch phosphor colour (remembered) |
-| `links` / `skills` | contact card and skill list |
 | `help` | the list above |
 | `history` | commands you typed |
 | `clear` | wipe the screen |
@@ -44,19 +43,54 @@ Keyboard: `Tab` completes, `↑`/`↓` walk history, `Ctrl+C` cancels the line,
 
 Everything textual lives in `assets/content.js`:
 
-- `name`, `role`, `tagline`, `location`, `email`, `links`, `skills`
+- `name`, `role`, `tagline` — shown in the boot message
 - `fs` — the virtual file system. Directories are nested `dirs`, files are
   `{ content: \`...\` }`. Add a directory and it appears in `ls`, `tree`
   and `cd` automatically. Names starting with `.` are hidden unless `ls -a`.
 
 To add a project: drop another `project-4.md` into `fs.dirs.projects.files`.
 
-## Deploying
+## Editing it yourself
 
-The site is served from the `gh-pages` branch (plain static files, no CI):
+Everything you want to change lives in **one file**: `assets/content.js`.
+
+### From the GitHub website (easiest, no git needed)
+
+1. Open https://github.com/conedone-sys/portfolio/blob/main/assets/content.js
+2. Click the pencil icon.
+3. Edit the text between the backticks. Keep the backticks, the commas
+   and the `'file-name': { content: ... }` shape intact.
+4. "Commit changes" → to `main`.
+5. Wait ~1 minute: the `publish` workflow copies `main` into `gh-pages`
+   and GitHub Pages rebuilds automatically.
+
+### From this machine
+
+Edit `D:\portfolio-main\assets\content.js`, then:
 
 ```bash
-git push origin main
+cd D:\portfolio-main
+git add -A
+git commit -m "content: update about"
+git push
+```
+
+### Rules of thumb
+
+- Files starting with `.` are hidden from `ls` unless you use `ls -a`.
+- Add a project = add another `'project-2.md': { content: `...` }` block.
+- Delete a line/file = delete the whole block, including its trailing comma.
+- Break something? `git revert` or ask me — every change is in history.
+
+## Deploying
+
+Pages serves the `gh-pages` branch, and you never push it by hand:
+`.github/workflows/publish.yml` force-mirrors `main` → `gh-pages` on every
+push to `main`.
+
+**Only ever edit `main`.** If the workflow ever fails, the manual fallback is:
+
+```bash
 git push origin main:gh-pages
 ```
 

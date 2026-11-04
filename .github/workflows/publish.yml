@@ -1,0 +1,24 @@
+name: publish
+
+# Mirrors the main branch into gh-pages, which is what GitHub Pages serves.
+# So: edit a file on github.com (or push to main) and the site updates itself.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-gh-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: mirror main to gh-pages
+        run: git push --force origin HEAD:gh-pages
