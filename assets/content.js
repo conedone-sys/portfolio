@@ -39,10 +39,15 @@ STATUS  : studying
 
 ABOUT
 -----
-Studying OSINT and pentest. I like cats and computers.
+studying osint and pentest. i like cats and computers.
 
-[Add two or three sentences here if you want: what exactly you are
-learning, which tools you use, what kind of work you are after.]
+my take: osint is not about digging up secrets, it is about noticing
+what everyone else left in plain sight. pentest is the same skill
+pointed at a server instead of a person. both are mostly reading,
+and reading is mostly patience.
+
+no public projects right now - a disk died and took the archive with
+it. rebuilding, one lab at a time.
 
 CONTACT
 -------
@@ -51,14 +56,11 @@ email : oyinoka@proton.me
           },
 
           'skills.txt': {
-            content: `[SKILL 1]      [level: advanced]
-[SKILL 2]      [level: intermediate]
-[SKILL 3]      [level: intermediate]
-[SKILL 4]      [level: beginner]
-[SKILL 5]      [level: beginner]
-[SKILL 6]      [level: beginner]
+            content: `OSINT     middle
+pentest   middle
+C#        junior
 
-currently learning: [SOMETHING NEW]
+currently learning: whatever breaks next
 `
           }
         }
@@ -67,15 +69,13 @@ currently learning: [SOMETHING NEW]
       projects: {
         dirs: {},
         files: {
-          'project-1.md': {
-            content: `# [PROJECT 1]
+          'lost.txt': {
+            content: `all previous projects were lost when a disk died,
+so this directory is empty for now.
 
-[One or two lines about what this project does and why it exists.]
+rebuilding, one lab at a time.
 
-stack : [tech, tech, tech]
-year  : [2026]
-repo  : [https://github.com/conedone-sys/...]
-live  : [https://example.com]
+new files will appear here.
 `
           }
         }
@@ -114,25 +114,6 @@ in your browser.
 
 Everything you see is a placeholder. Edit assets/content.js and
 it changes here.
-`
-      },
-
-      'resume.txt': {
-        content: `adept - OSINT student
-oyinoka@proton.me | https://github.com/conedone-sys
-
-EXPERIENCE
-  [2024 - now]  [Company] - [Position]
-                [one line about what you did]
-
-  [2022 - 2024] [Company] - [Position]
-                [one line about what you did]
-
-EDUCATION
-  [2018 - 2022] [University], [Degree]
-
-SKILLS
-  [skill 1], [skill 2], [skill 3], [skill 4]
 `
       },
 
