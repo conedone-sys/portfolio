@@ -432,6 +432,13 @@
       soundOn     = localStorage.getItem('pf-beep')  !== '0';
       clickOn     = localStorage.getItem('pf-click') === '1';
       initDone    = localStorage.getItem('pf-init')  === '1';
+
+      /* svg displacement is solid in chromium and gecko; on webkit
+         (every ios browser included) keep it opt-in instead of
+         risking a blank tube on an old device. */
+      var ua = navigator.userAgent || '';
+      var webkitOnly = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS/.test(ua);
+      if (webkitOnly && localStorage.getItem('pf-curve') === null) prefs.curve = 'off';
     } catch (e) {}
   }
 
