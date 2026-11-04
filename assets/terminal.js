@@ -230,6 +230,10 @@
       var s = document.createElement('span');
       s.className = 'entry ' + (e.dir ? 'dir' : 'file');
       s.textContent = e.name + (e.dir ? '/' : '');
+      s.dataset.name = e.name;
+      s.dataset.kind = e.dir ? 'dir' : 'file';
+      s.setAttribute('role', 'button');
+      s.tabIndex = 0;
       row.appendChild(s);
     });
     append(row);
@@ -241,7 +245,11 @@
       span(d, e.dir ? 'drwxr-xr-x  ' : '-rw-r--r--  ', 'dim');
       span(d, ((e.dir ? '-' : humanSize(e.file)) + '').padStart(6) + '  ', 'dim');
       span(d, (CFG.handle || 'guest') + '  ', 'dim');
-      span(d, e.name + (e.dir ? '/' : ''), e.dir ? 'dir' : 'file');
+      var name = span(d, e.name + (e.dir ? '/' : ''), (e.dir ? 'dir' : 'file') + ' entry');
+      name.dataset.name = e.name;
+      name.dataset.kind = e.dir ? 'dir' : 'file';
+      name.setAttribute('role', 'button');
+      name.tabIndex = 0;
       append(d);
     });
   }
@@ -370,6 +378,36 @@
     print('theme set to ' + t, 'ok');
   });
 
+  def('fx', 'CRT effects: fx on | fx off', function (args) {
+    var a = (args[0] || '').toLowerCase();
+    if (a !== 'on' && a !== 'off') {
+      print('crt effects: ' + prefs.fx, 'bright');
+      print('usage: fx on | fx off', 'dim');
+      return;
+    }
+    prefs.fx = a;
+    savePrefs();
+    applyPrefs();
+    print('crt effects ' + a, 'ok');
+  });
+
+  def('curve', 'screen curvature: curve on | curve off', function (args) {
+    var a = (args[0] || '').toLowerCase();
+    if (a !== 'on' && a !== 'off') {
+      print('screen curve: ' + (curveReady ? prefs.curve : 'unavailable'), 'bright');
+      print('usage: curve on | curve off', 'dim');
+      return;
+    }
+    if (a === 'on' && !curveReady) {
+      print('curve: not supported by this browser', 'err');
+      return;
+    }
+    prefs.curve = a;
+    savePrefs();
+    applyPrefs();
+    print('screen curve ' + a, 'ok');
+  });
+
   function applyTheme(t) {
     theme = t;
     document.documentElement.dataset.theme = t;
@@ -380,14 +418,20 @@
      preferences (persisted in localStorage)
      ============================================================ */
 
-  var prefs = { crt: 'on', font: 'normal' };
-  var soundOn = false;
+  var prefs = { crt: 'on', font: 'normal', fx: 'on', curve: 'on' };
+  var soundOn = true;    // system beeps: boot, errors, setup, bell
+  var clickOn = false;   // keyboard clicks
+  var initDone = false;  // first-run setup has been confirmed
 
   function loadPrefs() {
     try {
-      prefs.crt  = localStorage.getItem('pf-crt')  || 'on';
-      prefs.font = localStorage.getItem('pf-font') || 'normal';
-      soundOn    = localStorage.getItem('pf-sound') === '1';
+      prefs.crt   = localStorage.getItem('pf-crt')   || 'on';
+      prefs.font  = localStorage.getItem('pf-font')  || 'normal';
+      prefs.fx    = localStorage.getItem('pf-fx')    || 'on';
+      prefs.curve = localStorage.getItem('pf-curve') || 'on';
+      soundOn     = localStorage.getItem('pf-beep')  !== '0';
+      clickOn     = localStorage.getItem('pf-click') === '1';
+      initDone    = localStorage.getItem('pf-init')  === '1';
     } catch (e) {}
   }
 
@@ -395,36 +439,101 @@
     try {
       localStorage.setItem('pf-crt', prefs.crt);
       localStorage.setItem('pf-font', prefs.font);
-      localStorage.setItem('pf-sound', soundOn ? '1' : '0');
+      localStorage.setItem('pf-fx', prefs.fx);
+      localStorage.setItem('pf-curve', prefs.curve);
+      localStorage.setItem('pf-beep', soundOn ? '1' : '0');
+      localStorage.setItem('pf-click', clickOn ? '1' : '0');
+      localStorage.setItem('pf-init', initDone ? '1' : '0');
     } catch (e) {}
   }
 
   function applyPrefs() {
     document.documentElement.dataset.crt = prefs.crt;
     document.documentElement.dataset.font = prefs.font;
+    document.documentElement.dataset.fx = prefs.fx;
+    document.documentElement.dataset.curve = prefs.curve;
   }
+
+  /* ============================================================
+     screen curvature
+     a 64x64 displacement map rendered at runtime, fed to an
+     inline SVG feDisplacementMap filter. no webgl, no libraries.
+     ============================================================ */
+
+  var curveMapEl = document.getElementById('curve-map');
+  var curveShiftEl = document.getElementById('curve-shift');
+  var curveReady = false;
+
+  function buildCurveMap() {
+    if (!curveMapEl || !curveShiftEl) return;
+    if (!window.CanvasRenderingContext2D) return;   // no canvas support
+    try {
+      var S = 64;
+      var strength = 0.016;
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = S;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      var img = ctx.createImageData(S, S);
+
+      for (var y = 0; y < S; y++) {
+        for (var x = 0; x < S; x++) {
+          var u = (x / (S - 1)) * 2 - 1;
+          var v = (y / (S - 1)) * 2 - 1;
+          var r2 = u * u + v * v;
+          var factor = strength * r2;          // pull the edges outward
+          var du = u * factor;
+          var dv = v * factor;
+          var i = (y * S + x) * 4;
+          img.data[i]     = Math.round(128 + du * 128);
+          img.data[i + 1] = Math.round(128 + dv * 128);
+          img.data[i + 2] = 0;
+          img.data[i + 3] = 255;
+        }
+      }
+
+      ctx.putImageData(img, 0, 0);
+      var url = canvas.toDataURL('image/png');
+      curveMapEl.setAttribute('href', url);
+      curveMapEl.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url);
+      curveReady = true;
+      applyCurveScale();
+    } catch (e) {
+      curveReady = false;
+    }
+  }
+
+  function applyCurveScale() {
+    if (!curveReady || !curveShiftEl) return;
+    var span = 0.5 * Math.max(window.innerWidth || 800, window.innerHeight || 600);
+    curveShiftEl.setAttribute('scale', String(Math.round(span)));
+  }
+
+  var curveTimer = null;
+  window.addEventListener('resize', function () {
+    if (curveTimer) clearTimeout(curveTimer);
+    curveTimer = setTimeout(applyCurveScale, 120);
+  });
 
   /* ============================================================
      PC speaker (square wave, like the real thing)
      ============================================================ */
 
   var actx = null;
+  var bootBeepQueued = false;
 
   function audioCtx() {
-    if (actx) {
-      if (actx.state === 'suspended') actx.resume();
-      return actx;
-    }
+    if (actx) return actx;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     try { actx = new AC(); } catch (e) { return null; }
     return actx;
   }
 
-  function tone(freq, dur, force) {
-    if (!force && !soundOn) return;
+  /* returns false when the context is still locked by autoplay policy */
+  function playTone(freq, dur, vol) {
     var ac = audioCtx();
-    if (!ac) return;
+    if (!ac || ac.state === 'suspended') return false;
 
     var t0 = ac.currentTime;
     var osc = ac.createOscillator();
@@ -433,15 +542,44 @@
     osc.type = 'square';
     osc.frequency.setValueAtTime(freq, t0);
 
+    var peak = vol || 0.045;
     gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.exponentialRampToValueAtTime(0.05, t0 + 0.005);
+    gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.004);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
 
     osc.connect(gain);
     gain.connect(ac.destination);
     osc.start(t0);
     osc.stop(t0 + dur + 0.02);
+    return true;
   }
+
+  /* system beep - obeys the speaker setting */
+  function tone(freq, dur, vol) {
+    if (!soundOn) return;
+    playTone(freq, dur, vol);
+  }
+
+  /* keyboard click - obeys its own setting */
+  function clickTone() {
+    if (!clickOn) return;
+    playTone(300, 0.009, 0.02);
+  }
+
+  function unlockAudio() {
+    var ac = audioCtx();
+    if (ac && ac.state === 'suspended') {
+      try { ac.resume(); } catch (e) {}
+    }
+    if (bootBeepQueued) {
+      bootBeepQueued = false;
+      setTimeout(function () { playTone(392, 0.13, 0.05); }, 30);
+    }
+  }
+
+  window.addEventListener('pointerdown', unlockAudio);
+  window.addEventListener('keydown', unlockAudio);
+  window.addEventListener('touchstart', unlockAudio);
 
   def('beep', 'PC speaker beep  (beep 3)', function (args) {
     var n = parseInt(args[0], 10);
@@ -449,22 +587,39 @@
     if (n > 5) n = 5;
     for (var i = 0; i < n; i++) {
       (function (k) {
-        setTimeout(function () { tone(880, 0.1, true); }, k * 200);
+        setTimeout(function () { playTone(392, 0.11, 0.05); }, k * 220);
       })(i);
     }
     print('beep' + (n > 1 ? ' x' + n : ''), 'dim');
   });
 
-  def('sound', 'PC speaker: sound on | sound off', function (args) {
+  def('sound', 'PC speaker: sound on|off, sound click on|off', function (args) {
     var a = (args[0] || '').toLowerCase();
-    if (a !== 'on' && a !== 'off') {
-      print('pc speaker: ' + (soundOn ? 'on' : 'off'), 'bright');
-      print('usage: sound on | sound off', 'dim');
+    var b = (args[1] || '').toLowerCase();
+
+    if (a === 'click') {
+      if (b !== 'on' && b !== 'off') {
+        print('key clicks: ' + (clickOn ? 'on' : 'off'), 'bright');
+        print('usage: sound click on | sound click off', 'dim');
+        return;
+      }
+      clickOn = (b === 'on');
+      savePrefs();
+      if (clickOn) clickTone();
+      print('key clicks ' + b, 'ok');
       return;
     }
+
+    if (a !== 'on' && a !== 'off') {
+      print('pc speaker: ' + (soundOn ? 'on' : 'off'), 'bright');
+      print('key clicks: ' + (clickOn ? 'on' : 'off'), 'dim');
+      print('usage: sound on | sound off | sound click on | sound click off', 'dim');
+      return;
+    }
+
     soundOn = (a === 'on');
     savePrefs();
-    if (soundOn) tone(880, 0.12, true);
+    if (soundOn) tone(392, 0.11);
     print('pc speaker ' + a, 'ok');
   });
 
@@ -475,8 +630,10 @@
   var setupEl   = document.getElementById('setup');
   var setupBody = document.getElementById('setup-body');
   var setupSub  = document.getElementById('setup-sub');
+  var setupSave = document.getElementById('setup-save');
   var setupActive = false;
   var setupRow = 0;
+  var setupFirstRun = false;
 
   var SETUP_ITEMS = [
     {
@@ -492,6 +649,18 @@
       set: function (v) { prefs.crt = v; savePrefs(); applyPrefs(); }
     },
     {
+      label: 'Screen Curve',
+      values: ['on', 'off'],
+      get: function () { return curveReady ? prefs.curve : 'off'; },
+      set: function (v) { prefs.curve = v; savePrefs(); applyPrefs(); }
+    },
+    {
+      label: 'CRT Effects',
+      values: ['on', 'off'],
+      get: function () { return prefs.fx; },
+      set: function (v) { prefs.fx = v; savePrefs(); applyPrefs(); }
+    },
+    {
       label: 'Font Size',
       values: ['small', 'normal', 'large', 'huge'],
       get: function () { return prefs.font; },
@@ -501,7 +670,13 @@
       label: 'PC Speaker',
       values: ['off', 'on'],
       get: function () { return soundOn ? 'on' : 'off'; },
-      set: function (v) { soundOn = (v === 'on'); savePrefs(); tone(880, 0.08, true); }
+      set: function (v) { soundOn = (v === 'on'); savePrefs(); if (soundOn) tone(392, 0.1); }
+    },
+    {
+      label: 'Key Clicks',
+      values: ['off', 'on'],
+      get: function () { return clickOn ? 'on' : 'off'; },
+      set: function (v) { clickOn = (v === 'on'); savePrefs(); if (clickOn) clickTone(); }
     }
   ];
 
@@ -510,6 +685,7 @@
     SETUP_ITEMS.forEach(function (item, i) {
       var row = document.createElement('div');
       row.className = 'setup-row' + (i === setupRow ? ' sel' : '');
+      row.dataset.index = String(i);
 
       var k = document.createElement('span');
       k.className = 'setup-key';
@@ -525,56 +701,126 @@
     });
   }
 
-  function openSetup() {
+  function openSetup(firstRun) {
+    setupFirstRun = !!firstRun;
     setupActive = true;
     setupRow = 0;
-    setupSub.textContent = (CFG.handle || 'guest') + '@' + (CFG.host || 'portfolio') +
-                           ' - display & audio configuration';
+    setupSub.textContent = setupFirstRun
+      ? 'first run - choose your display, then press ESC'
+      : (CFG.handle || 'guest') + '@' + (CFG.host || 'portfolio') + ' - display & audio configuration';
     renderSetup();
     setupEl.hidden = false;
+    try { setupEl.focus({ preventScroll: true }); } catch (e) {}
     if (kbd.blur) kbd.blur();
+    tone(330, 0.09);
   }
 
   function closeSetup() {
+    if (!setupActive) return;
     setupActive = false;
     setupEl.hidden = true;
+    tone(262, 0.1);
+    if (setupFirstRun) setupFirstRun = false;
+    initDone = true;
+    savePrefs();
     if (kbd.focus) kbd.focus({ preventScroll: true });
     bootLine('[ OK ] settings saved');
   }
 
-  function handleSetupKey(e) {
-    var item = SETUP_ITEMS[setupRow];
+  /* normalise keyboard events - some layouts / browsers report
+     an empty e.key for arrows, so fall back to the numeric code. */
+  function setupKeyName(e) {
+    var name = e.key;
+    if (name && name !== 'Unidentified') return name;
+    var map = {
+      27: 'Escape', 13: 'Enter', 32: ' ', 9: 'Tab',
+      37: 'ArrowLeft', 38: 'ArrowUp', 39: 'ArrowRight', 40: 'ArrowDown',
+      121: 'F10', 122: 'F11'
+    };
+    return map[e.keyCode || e.which || 0] || '';
+  }
 
-    if (e.key === 'ArrowUp') {
-      setupRow = (setupRow + SETUP_ITEMS.length - 1) % SETUP_ITEMS.length;
-      renderSetup();
-      tone(600, 0.03);
-    } else if (e.key === 'ArrowDown') {
-      setupRow = (setupRow + 1) % SETUP_ITEMS.length;
-      renderSetup();
-      tone(600, 0.03);
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
-      var vals = item.values;
-      var cur = vals.indexOf(String(item.get()));
-      var step = (e.key === 'ArrowLeft') ? -1 : 1;
-      var next = (cur + step + vals.length) % vals.length;
-      item.set(vals[next]);
-      renderSetup();
-      tone(1000, 0.04);
-    } else if (e.key === 'Escape' || e.key === 'F10') {
+  function changeSetupValue(step) {
+    var item = SETUP_ITEMS[setupRow];
+    if (!item) return;
+    var values = item.values;
+    var current = String(item.get());
+    var idx = values.indexOf(current);
+    if (idx === -1) idx = 0;
+    var next = (idx + step + values.length) % values.length;
+    item.set(values[next]);
+    renderSetup();
+    tone(294, 0.05);
+  }
+
+  function moveSetupRow(step) {
+    setupRow = (setupRow + step + SETUP_ITEMS.length) % SETUP_ITEMS.length;
+    renderSetup();
+    tone(240, 0.035);
+  }
+
+  function handleSetupKey(e) {
+    var name = setupKeyName(e);
+
+    if (name === 'ArrowUp' || name === 'k') {
+      moveSetupRow(-1);
+    } else if (name === 'ArrowDown' || name === 'j') {
+      moveSetupRow(1);
+    } else if (name === 'ArrowRight' || name === 'l' || name === 'Enter' || name === ' ') {
+      changeSetupValue(1);
+    } else if (name === 'ArrowLeft' || name === 'h') {
+      changeSetupValue(-1);
+    } else if (name === 'Escape' || name === 'F10' || name === 'q') {
       closeSetup();
+    } else if (name === 'Tab') {
+      moveSetupRow(e.shiftKey ? -1 : 1);
     }
   }
 
-  document.addEventListener('keydown', function (e) {
+  /* capture on window: fires before anything inside the page can
+     swallow the key, even if focus sits in the hidden input. */
+  window.addEventListener('keydown', function (e) {
     if (!setupActive) return;
     e.preventDefault();
     e.stopPropagation();
     handleSetupKey(e);
   }, true);
 
+  /* mouse / touch fallback */
+  function setupRowFromEvent(e) {
+    var node = e.target;
+    while (node && node !== setupBody) {
+      if (node.classList && node.classList.contains('setup-row')) {
+        return parseInt(node.dataset.index, 10);
+      }
+      node = node.parentNode;
+    }
+    return -1;
+  }
+
+  setupBody.addEventListener('mousedown', function (e) {
+    if (!setupActive) return;
+    e.preventDefault();
+    var row = setupRowFromEvent(e);
+    if (row < 0) return;
+    setupRow = row;
+    var onValue = e.target.classList && e.target.classList.contains('setup-val');
+    if (onValue) changeSetupValue(1);
+    else { renderSetup(); tone(240, 0.035); }
+  });
+
+  setupBody.addEventListener('click', function (e) {
+    if (setupActive) e.preventDefault();
+  });
+
+  setupSave.addEventListener('mousedown', function (e) {
+    if (!setupActive) return;
+    e.preventDefault();
+    closeSetup();
+  });
+
   def('setup', 'BIOS-style settings screen', function () {
-    openSetup();
+    openSetup(false);
   });
 
   def('history', 'command history', function () {
@@ -654,6 +900,7 @@
     if (!cmd) {
       print(name + ': command not found', 'err');
       print("type 'help' for a list of commands", 'dim');
+      tone(175, 0.14);
       return;
     }
 
@@ -727,7 +974,7 @@
   kbd.addEventListener('keydown', function (e) {
     if (setupActive) return;
 
-    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) tone(1400, 0.012);
+    if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) clickTone();
 
     if (busy) {
       if (!e.metaKey && !e.ctrlKey) {
@@ -759,12 +1006,35 @@
     } else if (e.key === 'l' && e.ctrlKey) {
       e.preventDefault();
       outputEl.textContent = '';
+    } else if (e.key === 'g' && e.ctrlKey) {
+      e.preventDefault();
+      tone(392, 0.09);
+      setTimeout(function () { tone(392, 0.09); }, 140);
     }
   });
 
   document.addEventListener('click', function (e) {
+    if (setupActive) return;
     if (e.target.closest && e.target.closest('a')) return;
     kbd.focus({ preventScroll: true });
+  });
+
+  /* click an `ls` entry: files get catted, dirs get entered */
+  outputEl.addEventListener('click', function (e) {
+    if (setupActive) return;
+    var node = e.target;
+    while (node && node !== outputEl) {
+      if (node.classList && node.classList.contains('entry')) {
+        var name = node.dataset.name || '';
+        if (!name) return;
+        if (node.dataset.kind === 'dir') execute('cd ' + name);
+        else execute('cat ' + name);
+        screenEl.scrollTop = screenEl.scrollHeight;
+        kbd.focus({ preventScroll: true });
+        return;
+      }
+      node = node.parentNode;
+    }
   });
 
   document.addEventListener('keydown', function (e) {
@@ -803,11 +1073,17 @@
     }
   }
 
+  function postBeep() {
+    if (!soundOn) return;
+    if (!playTone(392, 0.13, 0.05)) bootBeepQueued = true;
+  }
+
   function boot() {
     busy = true;
     bootIdx = 0;
     outputEl.textContent = '';
     screenEl.scrollTop = 0;
+    postBeep();
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     (function step() {
@@ -837,6 +1113,10 @@
     print('');
     renderPrompt();
     kbd.focus({ preventScroll: true });
+
+    if (!initDone) {
+      setTimeout(function () { openSetup(true); }, 420);
+    }
   }
 
   /* ============================================================
@@ -845,6 +1125,8 @@
 
   document.title = (CFG.name && CFG.name.charAt(0) !== '[' ? CFG.name : 'portfolio') + ' - console';
   loadPrefs();
+  buildCurveMap();
+  if (!curveReady && prefs.curve === 'on') prefs.curve = 'off';
   applyPrefs();
   applyTheme(theme);
   renderPrompt();

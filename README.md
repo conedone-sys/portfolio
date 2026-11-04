@@ -1,7 +1,7 @@
 # portfolio
 
 A portfolio site that boots like a text console — DOS/FreeBSD aesthetics,
-CGA/EGA palette, CRT scanlines, no frameworks, no build step.
+CGA/EGA palette, a fully faked CRT, no frameworks, no build step.
 
 **Live:** https://conedone-sys.github.io/portfolio/
 
@@ -31,16 +31,47 @@ There is no bundler, no npm, no dependencies. Open `index.html` and it runs.
 | `tree` | whole file tree |
 | `neofetch` | system info card |
 | `theme dos\|green\|amber\|white` | switch phosphor colour (remembered) |
-| `setup` | BIOS-style setup screen: phosphor, scanlines, font size, PC speaker |
+| `setup` | BIOS-style setup screen (first visit opens it automatically) |
 | `beep` / `beep 3` | PC speaker beep (real square wave via WebAudio) |
-| `sound on\|off` | keyboard clicks + setup feedback |
+| `sound on\|off` | system beeps: boot, errors, setup, `Ctrl+G` bell |
+| `sound click on\|off` | keyboard clicks (off by default) |
+| `fx on\|off` | chromatic aberration, rolling band, grain, flicker |
+| `curve on\|off` | screen curvature (SVG displacement, no WebGL) |
 | `help` | the list above |
 | `history` | commands you typed |
 | `clear` | wipe the screen |
 | `sudo` / `exit` | jokes |
 
 Keyboard: `Tab` completes, `↑`/`↓` walk history, `Ctrl+C` cancels the line,
-`Ctrl+L` clears, `Ctrl+U` clears the line.
+`Ctrl+L` clears, `Ctrl+U` clears the line, `Ctrl+G` rings the bell.
+
+`ls` entries are clickable: a file runs `cat`, a directory runs `cd`.
+
+## First visit
+
+`setup` opens by itself once, like a BIOS on a fresh machine. Arrow keys (or
+`j`/`k`/`h`/`l`), `Tab`, or the mouse change the values; `Esc`, `F10` or a
+click on the bottom bar saves and drops you at the prompt. The answer is
+stored in `localStorage` under `pf-init`, so it never asks twice.
+
+## CRT
+
+Everything is CSS + one inline SVG filter — no WebGL, no canvas animation
+loop:
+
+- **power-on** — a thin line that opens into a picture
+- **scanlines** — repeating gradient overlay
+- **curvature** — a 64x64 displacement map generated at runtime on a canvas,
+  fed to `feDisplacementMap`; the filter is applied to `#screen`
+- **aberration** — red/blue `text-shadow` fringe
+- **rolling band** — a soft bright band sliding down the tube
+- **grain** — animated `feTurbulence` texture
+- **flicker** — a very slow brightness dip
+- **vignette** — radial darkening at the edges
+
+Each group can be turned off in `setup` (`CRT Scanlines`, `Screen Curve`,
+`CRT Effects`) and the choice is remembered. `prefers-reduced-motion` kills
+the animation while keeping the static look.
 
 ## Editing
 

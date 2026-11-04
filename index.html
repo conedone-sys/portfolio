@@ -17,23 +17,35 @@
 </head>
 <body>
 
-<main id="screen" class="screen" role="log" aria-live="polite" aria-label="Terminal">
-  <div id="output"></div>
-  <div class="line input-line">
-    <span id="prompt" class="prompt"></span><span id="cmdwrap" class="cmd-wrap"><span id="caret" class="caret"></span></span>
-  </div>
-</main>
+<div id="tube" class="tube">
+  <main id="screen" class="screen" role="log" aria-live="polite" aria-label="Terminal">
+    <div id="output"></div>
+    <div class="line input-line">
+      <span id="prompt" class="prompt"></span><span id="cmdwrap" class="cmd-wrap"><span id="caret" class="caret"></span></span>
+    </div>
+  </main>
+</div>
 
 <div class="crt" aria-hidden="true"></div>
+<div class="roll" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
 <div class="vignette" aria-hidden="true"></div>
 
-<div id="setup" class="setup" hidden>
+<svg class="fxdefs" aria-hidden="true" focusable="false" width="0" height="0">
+  <filter id="crt-curve" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
+    <feImage id="curve-map" result="map" preserveAspectRatio="none" x="0" y="0" width="100%" height="100%"></feImage>
+    <feDisplacementMap id="curve-shift" in="SourceGraphic" in2="map" scale="0"
+                       xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+  </filter>
+</svg>
+
+<div id="setup" class="setup" hidden tabindex="-1">
   <div class="setup-inner">
     <div class="setup-bar"><span>BIOS SETUP UTILITY</span><span>v1.0</span></div>
     <div id="setup-sub" class="setup-sub"></div>
     <div id="setup-body" class="setup-body"></div>
     <div class="setup-bar setup-bar--foot">
-      <span>ESC: save &amp; exit</span><span>&#8593;&#8595;: select</span><span>&#8592;&#8594;: change</span>
+      <span id="setup-save">ESC: save &amp; exit</span><span>&#8593;&#8595;: select</span><span>&#8592;&#8594;: change</span>
     </div>
   </div>
 </div>

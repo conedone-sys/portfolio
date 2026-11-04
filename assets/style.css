@@ -62,6 +62,14 @@ body{
 
 /* ---------- the screen ---------- */
 
+.tube{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  background:#000;
+  transform-origin:50% 50%;
+}
+
 .screen{
   height:100vh;
   height:100dvh;
@@ -109,7 +117,7 @@ a, a:visited{
 }
 a:hover{ background:var(--link); color:#000; text-shadow:none; }
 
-/* ---------- ls grid ---------- */
+/* ---------- ls grid / clickable entries ---------- */
 
 .entries{
   display:flex;
@@ -119,6 +127,22 @@ a:hover{ background:var(--link); color:#000; text-shadow:none; }
 .entries .entry{
   flex:0 0 auto;
   min-width:15ch;
+}
+
+.entry{
+  cursor:pointer;
+  outline:none;
+}
+.entry:hover,
+.entry:focus-visible{
+  background:var(--fg);
+  color:#000;
+  text-shadow:none;
+}
+.entries .entry:hover,
+.entries .entry:focus-visible{
+  background:var(--fg);
+  color:#000;
 }
 
 /* ---------- cursor ---------- */
@@ -139,6 +163,13 @@ a:hover{ background:var(--link); color:#000; text-shadow:none; }
 
 /* ---------- CRT overlay ---------- */
 
+.fxdefs{
+  position:absolute;
+  width:0;
+  height:0;
+  overflow:hidden;
+}
+
 .crt{
   position:fixed;
   inset:0;
@@ -152,6 +183,47 @@ a:hover{ background:var(--link); color:#000; text-shadow:none; }
     rgba(0,0,0,.22) 3px
   );
 }
+
+/* slow bright band rolling down the tube */
+.roll{
+  position:fixed;
+  inset:0;
+  z-index:12;
+  pointer-events:none;
+  overflow:hidden;
+  opacity:0;
+  transition:opacity .6s linear;
+}
+.roll::before{
+  content:'';
+  position:absolute;
+  left:0;
+  right:0;
+  top:-22vh;
+  height:22vh;
+  background:linear-gradient(
+    to bottom,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.028) 45%,
+    rgba(255,255,255,.055) 55%,
+    rgba(255,255,255,0) 100%
+  );
+  animation:roll 8.5s linear infinite;
+}
+
+/* phosphor grain */
+.grain{
+  position:fixed;
+  inset:0;
+  z-index:13;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .6s linear;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.55'/></svg>");
+  background-size:140px 140px;
+  animation:grain .9s steps(3,end) infinite;
+}
+
 .vignette{
   position:fixed;
   inset:0;
@@ -161,6 +233,81 @@ a:hover{ background:var(--link); color:#000; text-shadow:none; }
     rgba(0,0,0,0) 52%,
     rgba(0,0,0,.28) 82%,
     rgba(0,0,0,.55) 100%);
+}
+
+@keyframes roll{
+  from{ transform:translateY(0); }
+  to  { transform:translateY(122vh); }
+}
+@keyframes grain{
+  0%  { background-position:0 0; }
+  33% { background-position:-40px 20px; }
+  66% { background-position:30px -35px; }
+  100%{ background-position:0 0; }
+}
+
+/* power-on: a line that opens into a picture */
+@keyframes power-on{
+  0%{
+    transform:scale(1,.004);
+    filter:brightness(7) saturate(1.4);
+    opacity:0;
+  }
+  18%{
+    opacity:1;
+    filter:brightness(5) saturate(1.2);
+  }
+  42%{
+    transform:scale(1,1);
+    filter:brightness(2.1);
+  }
+  70%{ filter:brightness(1.18); }
+  100%{
+    transform:none;
+    filter:none;
+    opacity:1;
+  }
+}
+
+/* very slow brightness breathing of the tube */
+@keyframes flicker{
+  0%, 100%{ opacity:1; }
+  76%     { opacity:1; }
+  77%     { opacity:.965; }
+  78%     { opacity:1; }
+  91%     { opacity:1; }
+  92%     { opacity:.978; }
+  93%     { opacity:1; }
+}
+
+.tube{
+  animation:power-on .95s cubic-bezier(.22,.8,.3,1);
+}
+
+/* ---------- effect switches (setup + localStorage) ---------- */
+
+html[data-crt="off"] .crt{ display:none; }
+html[data-crt="off"] body{ text-shadow:0 0 1px currentColor; }
+
+html[data-curve="on"] .screen{
+  filter:url(#crt-curve);
+}
+
+html[data-fx="off"] .roll,
+html[data-fx="off"] .grain{ display:none; }
+
+html[data-fx="on"] .roll{ opacity:1; }
+html[data-fx="on"] .grain{ opacity:.05; }
+
+/* chromatic aberration + slightly hotter glow */
+html[data-fx="on"] body{
+  text-shadow:
+    -.55px 0 rgba(255,0,70,.30),
+     .55px 0 rgba(0,140,255,.30),
+     0 0 7px var(--glow);
+}
+html[data-fx="on"] .tube{
+  animation:power-on .95s cubic-bezier(.22,.8,.3,1), flicker 9s 1.2s linear infinite;
 }
 
 /* ---------- hidden keyboard sink (enables mobile keyboards) ---------- */
@@ -182,10 +329,7 @@ a:hover{ background:var(--link); color:#000; text-shadow:none; }
   pointer-events:none;
 }
 
-/* ---------- preferences: scanlines, font size ---------- */
-
-html[data-crt="off"] .crt{ display:none; }
-html[data-crt="off"] body{ text-shadow:0 0 1px currentColor; }
+/* ---------- preferences: font size ---------- */
 
 html[data-font="small"]  body{ font-size:clamp(11.5px, .32vw + 9.5px, 15px); }
 html[data-font="normal"] body{ font-size:clamp(12.5px, .42vw + 10.5px, 18px); }
@@ -231,13 +375,25 @@ html[data-font="huge"]   body{ font-size:clamp(16px, .62vw + 14px, 27px); }
   justify-content:space-between;
   gap:2ch;
   padding:0 1ch;
+  cursor:pointer;
 }
 .setup-row.sel{
   background:#55ffff;
   color:#0000aa;
 }
+.setup-row:hover{
+  background:#0055aa;
+  color:#ffffff;
+}
+.setup-row.sel:hover{
+  background:#55ffff;
+  color:#0000aa;
+}
 .setup-key,
 .setup-val{ white-space:pre; }
+.setup-val{ cursor:pointer; }
+
+#setup-save{ cursor:pointer; }
 
 /* ---------- noscript ---------- */
 
@@ -254,4 +410,9 @@ html[data-font="huge"]   body{ font-size:clamp(16px, .62vw + 14px, 27px); }
 @media (prefers-reduced-motion: reduce){
   .caret{ animation:none; }
   .screen{ scroll-behavior:auto; }
+  .tube{ animation:none !important; }
+  html[data-fx="on"] .tube{ animation:none !important; }
+  .roll::before,
+  .grain{ animation:none; }
+  html[data-fx="on"] .grain{ opacity:.03; }
 }
