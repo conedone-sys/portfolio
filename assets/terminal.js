@@ -240,7 +240,7 @@
       var d = makeLine();
       span(d, e.dir ? 'drwxr-xr-x  ' : '-rw-r--r--  ', 'dim');
       span(d, ((e.dir ? '-' : humanSize(e.file)) + '').padStart(6) + '  ', 'dim');
-      span(d, 'guest  ', 'dim');
+      span(d, (CFG.handle || 'guest') + '  ', 'dim');
       span(d, e.name + (e.dir ? '/' : ''), e.dir ? 'dir' : 'file');
       append(d);
     });

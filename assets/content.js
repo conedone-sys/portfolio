@@ -8,14 +8,14 @@ window.PORTFOLIO = {
 
   /* ---------- prompt identity ---------- */
 
-  handle: 'guest',              // prompt name:  guest@portfolio
+  handle: 'adept',              // prompt name:  adept@portfolio
   host:   'portfolio',          // prompt host
 
   /* ---------- who you are ---------- */
 
-  name:    '[YOUR NAME]',
-  role:    '[YOUR ROLE]',
-  tagline: '[ONE LINE ABOUT YOU]',
+  name:    'adept',
+  role:    'OSINT student',
+  tagline: 'studying OSINT and pentest, i like cats and computers',
 
   /* ---------- the virtual file system ----------
      dirs  : { name: { dirs:{}, files:{} } }
@@ -33,21 +33,20 @@ window.PORTFOLIO = {
         dirs: {},
         files: {
           'about.txt': {
-            content: `NAME    : [YOUR NAME]
-ROLE    : [YOUR ROLE]
-STATUS  : [open to work / employed / studying]
+            content: `NAME    : adept
+ROLE    : OSINT student
+STATUS  : studying
 
 ABOUT
 -----
-[Write three or four sentences about yourself here. What you do,
-what you are learning, what kind of problems you like to solve.]
+Studying OSINT and pentest. I like cats and computers.
 
-[Second paragraph. Keep it short - nobody reads long bios on a
-console.]
+[Add two or three sentences here if you want: what exactly you are
+learning, which tools you use, what kind of work you are after.]
 
 CONTACT
 -------
-email : you@example.com
+email : oyinoka@proton.me
 `
           },
 
@@ -86,7 +85,7 @@ live  : [https://example.com]
         dirs: {},
         files: {
           'email.txt': {
-            content: `you@example.com
+            content: `oyinoka@proton.me
 `
           },
           'links.txt': {
@@ -119,8 +118,8 @@ it changes here.
       },
 
       'resume.txt': {
-        content: `[YOUR NAME] - [YOUR ROLE]
-[email] | [github]
+        content: `adept - OSINT student
+oyinoka@proton.me | https://github.com/conedone-sys
 
 EXPERIENCE
   [2024 - now]  [Company] - [Position]
@@ -139,8 +138,9 @@ SKILLS
 
       '.profile': {
         content: `# read by the shell on login
-export NAME="[YOUR NAME]"
-export ROLE="[YOUR ROLE]"
+export NAME="adept"
+export ROLE="OSINT student"
+export EMAIL="oyinoka@proton.me"
 export EDITOR=vi
 `
       }
