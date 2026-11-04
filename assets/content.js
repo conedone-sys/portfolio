@@ -39,15 +39,12 @@ STATUS  : studying
 
 ABOUT
 -----
-studying osint and pentest. i like cats and computers.
+studying osint and pentest. i like cats and computers
 
 my take: osint is not about digging up secrets, it is about noticing
 what everyone else left in plain sight. pentest is the same skill
 pointed at a server instead of a person. both are mostly reading,
-and reading is mostly patience.
-
-no public projects right now - a disk died and took the archive with
-it. rebuilding, one lab at a time.
+and reading is mostly patience
 
 CONTACT
 -------
@@ -70,10 +67,8 @@ currently learning: whatever breaks next
         dirs: {},
         files: {
           'lost.txt': {
-            content: `all previous projects were lost when a disk died,
-so this directory is empty for now.
-
-rebuilding, one lab at a time.
+            content: `all previous projects were lost,
+so this directory is empty for now
 
 new files will appear here.
 `
@@ -101,8 +96,8 @@ new files will appear here.
       'README.md': {
         content: `# portfolio
 
-This is not a website. It is a text console that happens to run
-in your browser.
+this is not a website. It is a text console that happens to run
+in your browser
 
   ls                 list files
   cat <file>         read a file
@@ -112,8 +107,8 @@ in your browser.
   theme green        switch the phosphor colour
   help               all commands
 
-Everything you see is a placeholder. Edit assets/content.js and
-it changes here.
+everything you see is a placeholder, edit assets/content.js and
+it changes here
 `
       },
 
