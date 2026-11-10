@@ -391,23 +391,6 @@
     print('crt effects ' + a, 'ok');
   });
 
-  def('curve', 'screen curvature: curve on | curve off', function (args) {
-    var a = (args[0] || '').toLowerCase();
-    if (a !== 'on' && a !== 'off') {
-      print('screen curve: ' + (curveReady ? prefs.curve : 'unavailable'), 'bright');
-      print('usage: curve on | curve off', 'dim');
-      return;
-    }
-    if (a === 'on' && !curveReady) {
-      print('curve: not supported by this browser', 'err');
-      return;
-    }
-    prefs.curve = a;
-    savePrefs();
-    applyPrefs();
-    print('screen curve ' + a, 'ok');
-  });
-
   function applyTheme(t) {
     theme = t;
     document.documentElement.dataset.theme = t;
@@ -418,7 +401,7 @@
      preferences (persisted in localStorage)
      ============================================================ */
 
-  var prefs = { crt: 'on', font: 'normal', fx: 'on', curve: 'on' };
+  var prefs = { crt: 'on', font: 'normal', fx: 'on' };
   var soundOn = true;    // system beeps: boot, errors, setup, bell
   var clickOn = false;   // keyboard clicks
   var initDone = false;  // first-run setup has been confirmed
@@ -428,17 +411,9 @@
       prefs.crt   = localStorage.getItem('pf-crt')   || 'on';
       prefs.font  = localStorage.getItem('pf-font')  || 'normal';
       prefs.fx    = localStorage.getItem('pf-fx')    || 'on';
-      prefs.curve = localStorage.getItem('pf-curve') || 'on';
       soundOn     = localStorage.getItem('pf-beep')  !== '0';
       clickOn     = localStorage.getItem('pf-click') === '1';
       initDone    = localStorage.getItem('pf-init')  === '1';
-
-      /* svg displacement is solid in chromium and gecko; on webkit
-         (every ios browser included) keep it opt-in instead of
-         risking a blank tube on an old device. */
-      var ua = navigator.userAgent || '';
-      var webkitOnly = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS/.test(ua);
-      if (webkitOnly && localStorage.getItem('pf-curve') === null) prefs.curve = 'off';
     } catch (e) {}
   }
 
@@ -447,7 +422,6 @@
       localStorage.setItem('pf-crt', prefs.crt);
       localStorage.setItem('pf-font', prefs.font);
       localStorage.setItem('pf-fx', prefs.fx);
-      localStorage.setItem('pf-curve', prefs.curve);
       localStorage.setItem('pf-beep', soundOn ? '1' : '0');
       localStorage.setItem('pf-click', clickOn ? '1' : '0');
       localStorage.setItem('pf-init', initDone ? '1' : '0');
@@ -458,69 +432,7 @@
     document.documentElement.dataset.crt = prefs.crt;
     document.documentElement.dataset.font = prefs.font;
     document.documentElement.dataset.fx = prefs.fx;
-    document.documentElement.dataset.curve = prefs.curve;
   }
-
-  /* ============================================================
-     screen curvature
-     a 64x64 displacement map rendered at runtime, fed to an
-     inline SVG feDisplacementMap filter. no webgl, no libraries.
-     ============================================================ */
-
-  var curveMapEl = document.getElementById('curve-map');
-  var curveShiftEl = document.getElementById('curve-shift');
-  var curveReady = false;
-
-  function buildCurveMap() {
-    if (!curveMapEl || !curveShiftEl) return;
-    if (!window.CanvasRenderingContext2D) return;   // no canvas support
-    try {
-      var S = 64;
-      var strength = 0.016;
-      var canvas = document.createElement('canvas');
-      canvas.width = canvas.height = S;
-      var ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      var img = ctx.createImageData(S, S);
-
-      for (var y = 0; y < S; y++) {
-        for (var x = 0; x < S; x++) {
-          var u = (x / (S - 1)) * 2 - 1;
-          var v = (y / (S - 1)) * 2 - 1;
-          var r2 = u * u + v * v;
-          var factor = strength * r2;          // pull the edges outward
-          var du = u * factor;
-          var dv = v * factor;
-          var i = (y * S + x) * 4;
-          img.data[i]     = Math.round(128 + du * 128);
-          img.data[i + 1] = Math.round(128 + dv * 128);
-          img.data[i + 2] = 0;
-          img.data[i + 3] = 255;
-        }
-      }
-
-      ctx.putImageData(img, 0, 0);
-      var url = canvas.toDataURL('image/png');
-      curveMapEl.setAttribute('href', url);
-      curveMapEl.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url);
-      curveReady = true;
-      applyCurveScale();
-    } catch (e) {
-      curveReady = false;
-    }
-  }
-
-  function applyCurveScale() {
-    if (!curveReady || !curveShiftEl) return;
-    var span = 0.5 * Math.max(window.innerWidth || 800, window.innerHeight || 600);
-    curveShiftEl.setAttribute('scale', String(Math.round(span)));
-  }
-
-  var curveTimer = null;
-  window.addEventListener('resize', function () {
-    if (curveTimer) clearTimeout(curveTimer);
-    curveTimer = setTimeout(applyCurveScale, 120);
-  });
 
   /* ============================================================
      PC speaker (square wave, like the real thing)
@@ -654,12 +566,6 @@
       values: ['on', 'off'],
       get: function () { return prefs.crt; },
       set: function (v) { prefs.crt = v; savePrefs(); applyPrefs(); }
-    },
-    {
-      label: 'Screen Curve',
-      values: ['on', 'off'],
-      get: function () { return curveReady ? prefs.curve : 'off'; },
-      set: function (v) { prefs.curve = v; savePrefs(); applyPrefs(); }
     },
     {
       label: 'CRT Effects',
@@ -1132,8 +1038,6 @@
 
   document.title = (CFG.name && CFG.name.charAt(0) !== '[' ? CFG.name : 'portfolio') + ' - console';
   loadPrefs();
-  buildCurveMap();
-  if (!curveReady && prefs.curve === 'on') prefs.curve = 'off';
   applyPrefs();
   applyTheme(theme);
   renderPrompt();

@@ -35,8 +35,7 @@ There is no bundler, no npm, no dependencies. Open `index.html` and it runs.
 | `beep` / `beep 3` | PC speaker beep (real square wave via WebAudio) |
 | `sound on\|off` | system beeps: boot, errors, setup, `Ctrl+G` bell |
 | `sound click on\|off` | keyboard clicks (off by default) |
-| `fx on\|off` | chromatic aberration, rolling band, grain, flicker |
-| `curve on\|off` | screen curvature (SVG displacement, no WebGL) |
+| `fx on\|off` | chromatic aberration, grain |
 | `help` | the list above |
 | `history` | commands you typed |
 | `clear` | wipe the screen |
@@ -56,22 +55,17 @@ stored in `localStorage` under `pf-init`, so it never asks twice.
 
 ## CRT
 
-Everything is CSS + one inline SVG filter — no WebGL, no canvas animation
-loop:
+Everything is CSS — no WebGL, no canvas, no animation loop:
 
 - **power-on** — a thin line that opens into a picture
 - **scanlines** — repeating gradient overlay
-- **curvature** — a 64x64 displacement map generated at runtime on a canvas,
-  fed to `feDisplacementMap`; the filter is applied to `#screen`
 - **aberration** — red/blue `text-shadow` fringe
-- **rolling band** — a soft bright band sliding down the tube
-- **grain** — animated `feTurbulence` texture
-- **flicker** — a very slow brightness dip
+- **grain** — a static `feTurbulence` texture
 - **vignette** — radial darkening at the edges
 
-Each group can be turned off in `setup` (`CRT Scanlines`, `Screen Curve`,
-`CRT Effects`) and the choice is remembered. `prefers-reduced-motion` kills
-the animation while keeping the static look.
+Each group can be turned off in `setup` (`CRT Scanlines`, `CRT Effects`) and
+the choice is remembered. `prefers-reduced-motion` kills the animation while
+keeping the static look.
 
 ## Editing
 
