@@ -340,11 +340,19 @@
      ============================================================ */
 
   var LOGO = [
-    '   /\\_/\\   ',
-    '  ( o.o )  ',
-    '   > ^ <   ',
-    '  /|   |\\  ',
-    '   |___|   '
+    '⠀⠀⠀⠀⠀⢀⣠⣤⣶⣶⣿⣿⣿⣶⣶⣤⡀⠀⠀⠀⠀',
+    '⠀⠀⠀⠀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⠀',
+    '⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀',
+    '⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀',
+    '⠀⠀⢸⣿⣿⣿⣿⣿⡏⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀',
+    '⠀⠀⠘⣿⣿⣟⡿⢿⣷⢸⠞⠛⢽⣾⣛⡟⣿⣿⣿⠁⠀',
+    '⠀⠀⠀⠻⣿⡟⢶⡿⡿⠀⠀⠀⠀⠹⠯⠏⢸⣿⣿⠀⠀',
+    '⠀⠀⠀⠀⠛⣾⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⡏⠀⠀',
+    '⠀⠀⠀⠀⠀⣿⣿⣄⠀⠀⠈⠍⠀⠀⢀⣼⣿⣿⡇⠀⠀',
+    '⠀⠀⠀⠀⠀⠈⠀⠘⢉⠖⠠⠤⠤⠀⠈⡌⣿⡏⠀⠀⠀',
+    '⠀⠀⠀⠀⠀⢀⡠⠔⠊⠀⠀⠀⠀⠀⠀⠈⣿⡀⠀⠀⠀',
+    '⠀⡠⠂⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠈⠁⠂⢄',
+    '⢰⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣆⠀⠀⠈'
   ];
 
   /* the classic 16 colour CGA palette */
@@ -384,21 +392,31 @@
       ['uptime', uptimeText()]
     ];
 
-    var artW = 0;
-    LOGO.forEach(function (l) { if (l.length > artW) artW = l.length; });
-    artW += 3;
+    /* two grid columns, so the logo can be any width and any font
+       (braille art falls back to a proportional face) without
+       pushing the info column around */
+    var wrap = makeLine('nf');
 
-    var rows = Math.max(LOGO.length, info.length);
-    for (var i = 0; i < rows; i++) {
-      var d = makeLine();
-      span(d, (LOGO[i] || '').padEnd(artW), 'accent');
-      var item = info[i];
-      if (item) {
-        span(d, item[0].padEnd(8), item[0] ? 'dim' : '');
-        span(d, item[1], item[0] ? '' : 'bright');
+    var art = document.createElement('pre');
+    art.className = 'nf-art';
+    art.textContent = LOGO.join('\n');
+
+    var col = document.createElement('div');
+    col.className = 'nf-info';
+    info.forEach(function (item) {
+      var row = document.createElement('div');
+      if (item[0]) {
+        span(row, item[0].padEnd(8), 'dim');
+        span(row, item[1], '');
+      } else {
+        span(row, item[1], 'bright');
       }
-      append(d);
-    }
+      col.appendChild(row);
+    });
+
+    wrap.appendChild(art);
+    wrap.appendChild(col);
+    append(wrap);
 
     var p = makeLine();
     span(p, '  ', '');

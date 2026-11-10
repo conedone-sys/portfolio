@@ -148,6 +148,27 @@ a:hover{ background:var(--link); color:#000; text-shadow:none; }
   color:#000;
 }
 
+/* ---------- neofetch ---------- */
+
+.nf{
+  display:grid;
+  grid-template-columns:auto auto;
+  justify-content:start;
+  align-items:start;
+  column-gap:3ch;
+}
+
+.nf-art{
+  margin:0;
+  font-family:inherit;
+  font-size:inherit;
+  line-height:inherit;
+  white-space:pre;
+  color:var(--accent);
+}
+
+.nf-info > div{ white-space:pre; }
+
 /* ---------- cursor ---------- */
 
 .caret{
