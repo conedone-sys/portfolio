@@ -35,7 +35,6 @@ There is no bundler, no npm, no dependencies. Open `index.html` and it runs.
 | `beep` / `beep 3` | PC speaker beep (real square wave via WebAudio) |
 | `sound on\|off` | system beeps: boot, errors, setup, `Ctrl+G` bell |
 | `sound click on\|off` | keyboard clicks (off by default) |
-| `fx on\|off` | chromatic aberration, grain |
 | `help` | the list above |
 | `history` | commands you typed |
 | `clear` | wipe the screen |
@@ -63,9 +62,10 @@ Everything is CSS — no WebGL, no canvas, no animation loop:
 - **grain** — a static `feTurbulence` texture
 - **vignette** — radial darkening at the edges
 
-Aberration and grain can be switched off with `fx off` and the choice is
-remembered. `prefers-reduced-motion` kills the animation while keeping the
-static look.
+The `neofetch` logo is plain text: edit the `LOGO` array in
+`assets/terminal.js` and the info column re-aligns itself.
+
+`prefers-reduced-motion` kills the animation while keeping the static look.
 
 ## Editing
 

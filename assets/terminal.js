@@ -333,37 +333,77 @@
     });
   }
 
+  /* ============================================================
+     neofetch
+     LOGO is plain text: replace the strings below with any ascii
+     art you like. the info column re-aligns to the widest line.
+     ============================================================ */
+
+  var LOGO = [
+    '   /\\_/\\   ',
+    '  ( o.o )  ',
+    '   > ^ <   ',
+    '  /|   |\\  ',
+    '   |___|   '
+  ];
+
+  /* the classic 16 colour CGA palette */
+  var PALETTE = [
+    '#000000', '#0000aa', '#00aa00', '#00aaaa',
+    '#aa0000', '#aa00aa', '#aa5500', '#aaaaaa',
+    '#555555', '#5555ff', '#55ff55', '#55ffff',
+    '#ff5555', '#ff55ff', '#ffff55', '#ffffff'
+  ];
+
+  function swatch(parent, color) {
+    var s = document.createElement('span');
+    s.textContent = '  ';
+    s.style.display = 'inline-block';
+    s.style.width = '3ch';
+    s.style.height = '1em';
+    s.style.background = color;
+    s.style.verticalAlign = 'text-bottom';
+    parent.appendChild(s);
+    return s;
+  }
+
   def('neofetch', 'system information', function () {
     var id = (CFG.handle || 'guest') + '@' + (CFG.host || 'portfolio');
-    var art = [
-      '  ┌────────────────┐',
-      '  │  >_            │',
-      '  │                │',
-      '  │                │',
-      '  └────────────────┘'
-    ];
+    var cores = navigator.hardwareConcurrency || 1;
     var info = [
       ['', id],
       ['', new Array(id.length + 1).join('-')],
       ['os', 'FreeBSD 14.0-RELEASE'],
       ['host', CFG.host || 'portfolio'],
+      ['kernel', '14.0-RELEASE-p3'],
       ['shell', 'sh'],
       ['term', 'vga 80x25'],
       ['theme', theme],
       ['res', window.innerWidth + 'x' + window.innerHeight],
+      ['cpu', cores + '-core'],
       ['uptime', uptimeText()]
     ];
-    var rows = Math.max(art.length, info.length);
+
+    var artW = 0;
+    LOGO.forEach(function (l) { if (l.length > artW) artW = l.length; });
+    artW += 3;
+
+    var rows = Math.max(LOGO.length, info.length);
     for (var i = 0; i < rows; i++) {
       var d = makeLine();
-      span(d, (art[i] || '').padEnd(22), 'dim');
+      span(d, (LOGO[i] || '').padEnd(artW), 'accent');
       var item = info[i];
       if (item) {
-        span(d, item[0].padEnd(8), 'accent');
+        span(d, item[0].padEnd(8), item[0] ? 'dim' : '');
         span(d, item[1], item[0] ? '' : 'bright');
       }
       append(d);
     }
+
+    var p = makeLine();
+    span(p, '  ', '');
+    PALETTE.forEach(function (c) { swatch(p, c); });
+    append(p);
   });
 
   def('theme', 'phosphor colour: dos | green | amber | white', function (args) {
@@ -378,19 +418,6 @@
     print('theme set to ' + t, 'ok');
   });
 
-  def('fx', 'CRT effects: fx on | fx off', function (args) {
-    var a = (args[0] || '').toLowerCase();
-    if (a !== 'on' && a !== 'off') {
-      print('crt effects: ' + prefs.fx, 'bright');
-      print('usage: fx on | fx off', 'dim');
-      return;
-    }
-    prefs.fx = a;
-    savePrefs();
-    applyPrefs();
-    print('crt effects ' + a, 'ok');
-  });
-
   function applyTheme(t) {
     theme = t;
     document.documentElement.dataset.theme = t;
@@ -401,7 +428,7 @@
      preferences (persisted in localStorage)
      ============================================================ */
 
-  var prefs = { crt: 'on', font: 'normal', fx: 'on' };
+  var prefs = { crt: 'on', font: 'normal' };
   var soundOn = true;    // system beeps: boot, errors, setup, bell
   var clickOn = false;   // keyboard clicks
   var initDone = false;  // first-run setup has been confirmed
@@ -410,7 +437,6 @@
     try {
       prefs.crt   = localStorage.getItem('pf-crt')   || 'on';
       prefs.font  = localStorage.getItem('pf-font')  || 'normal';
-      prefs.fx    = localStorage.getItem('pf-fx')    || 'on';
       soundOn     = localStorage.getItem('pf-beep')  !== '0';
       clickOn     = localStorage.getItem('pf-click') === '1';
       initDone    = localStorage.getItem('pf-init')  === '1';
@@ -421,7 +447,6 @@
     try {
       localStorage.setItem('pf-crt', prefs.crt);
       localStorage.setItem('pf-font', prefs.font);
-      localStorage.setItem('pf-fx', prefs.fx);
       localStorage.setItem('pf-beep', soundOn ? '1' : '0');
       localStorage.setItem('pf-click', clickOn ? '1' : '0');
       localStorage.setItem('pf-init', initDone ? '1' : '0');
@@ -431,7 +456,6 @@
   function applyPrefs() {
     document.documentElement.dataset.crt = prefs.crt;
     document.documentElement.dataset.font = prefs.font;
-    document.documentElement.dataset.fx = prefs.fx;
   }
 
   /* ============================================================
