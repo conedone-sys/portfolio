@@ -63,9 +63,9 @@ Everything is CSS — no WebGL, no canvas, no animation loop:
 - **grain** — a static `feTurbulence` texture
 - **vignette** — radial darkening at the edges
 
-Each group can be turned off in `setup` (`CRT Scanlines`, `CRT Effects`) and
-the choice is remembered. `prefers-reduced-motion` kills the animation while
-keeping the static look.
+Aberration and grain can be switched off with `fx off` and the choice is
+remembered. `prefers-reduced-motion` kills the animation while keeping the
+static look.
 
 ## Editing
 

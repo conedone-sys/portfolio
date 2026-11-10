@@ -562,18 +562,6 @@
       set: function (v) { applyTheme(v); }
     },
     {
-      label: 'CRT Scanlines',
-      values: ['on', 'off'],
-      get: function () { return prefs.crt; },
-      set: function (v) { prefs.crt = v; savePrefs(); applyPrefs(); }
-    },
-    {
-      label: 'CRT Effects',
-      values: ['on', 'off'],
-      get: function () { return prefs.fx; },
-      set: function (v) { prefs.fx = v; savePrefs(); applyPrefs(); }
-    },
-    {
       label: 'Font Size',
       values: ['small', 'normal', 'large', 'huge'],
       get: function () { return prefs.font; },
